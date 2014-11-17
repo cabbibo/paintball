@@ -1,0 +1,694 @@
+<html>
+
+<head>
+
+  <link rel="stylesheet" type="text/css" href="main.css">
+
+  <meta name="twitter:card" content="photo">
+  <meta name="twitter:site" content="@cabbibo">
+  <meta name="twitter:creator" content="@cabbibo">
+  <meta name="twitter:url" content="http://cabbi.bo">
+  <meta name="twitter:title" content="Long Live Synesthesia">
+  <meta name="twitter:description" content="Long Live Synesthesia">
+  <meta name="twitter:creator" content="@cabbibo">
+  <meta name="twitter:image" content="http://cabbi.bo/image.png">
+  <meta name="twitter:image:width" content="1440">
+  <meta name="twitter:image:height" content="900">
+  <meta name="twitter:domain" content="cabbi.bo">
+  <meta itemprop="name" content="Cabbi.bo">
+  <meta itemprop="description" content="Long Live Synesthesia">
+  <meta itemprop="image" src="http://cabbi.bo/image.png">
+  <meta property="og:title" content="Cabbi.bo">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="http://cabbi.bo/image.png"/>
+  <meta property="og:site_name" content="Cabbi.bo">
+  <meta property="og:description" content="Long Live Synesthesia">
+
+  <style>
+
+    @font-face {
+      font-family: "GeoSans";
+      src: url("lib/GeosansLight.ttf");
+    }
+    html{ color:#fff; background:#000; font-family:"GeoSans"; font-size:20px; overflow:hidden }
+
+    #container{
+      width      : 100%;
+      height     : 100%;
+      position   : absolute;
+      top        : 0px;
+      left       : 0px;
+      background : #000;
+    }
+
+    #stats{
+      position  : absolute;
+      bottom    : -35px;
+
+      left      : 0px;
+      z-index   : 999;
+      opacity: .1;
+      display: none;
+    }
+
+    a{
+      color: #fff;
+      position: absolute;
+      z-index: 999;
+    }
+
+    #loading{
+
+      width:100%;
+      text-align:center;
+      padding-top:100px;
+      font-size:25px;
+
+    }
+    
+    a{
+      color: #fff;
+      position: absolute;
+      z-index: 999;
+      bottom:5px;
+      right:10px;
+      text-decoration:none;
+      //underline:none;
+      opacity:.5;
+      font-size: 20px;
+    }
+
+    a:hover{
+
+      text-decoration:underline;
+      opacity:1;
+
+    }
+
+    h1{
+      background: #000;
+      color: #fff;
+      margin: 0px;
+      padding: 5px;
+      font-size:25px;
+      border-bottom:1px solid white;
+    }
+
+    h1:hover{
+
+      background:#777;
+
+    }
+
+    .active{
+      background:#7ca;
+    }
+
+    .close-button{
+  
+      display:none;
+
+    }
+
+    #GUI{
+
+      position:fixed;
+      right:0px;
+      top:0px;
+      z-index:999;
+      display: none;
+
+    }
+    
+    </style>
+</head>
+<body>
+
+  <div id="description">
+
+    <a href="http://atomnation.bandcamp.com/album/autumn-bells" target="_blank">
+      <!--Gidge - Growth -->
+    </a>
+
+  </div>
+
+
+  <div id="GUI">
+  </div>
+  
+<script src = "lib/underscore.js"           ></script>
+<script src = "lib/three.js"                ></script>
+<script src = "lib/jquery.min.js"           ></script>
+<script src = "lib/leap.js"                 ></script>
+<script src = "lib/stats.min.js"            ></script>
+<script src = "lib/TrackballControls.js"    ></script>
+<script src = "lib/ShaderLoader.js"         ></script>
+<script src = "lib/UserAudio.js"            ></script>
+<script src = "lib/Stream.js"               ></script>
+<script src = "lib/AudioController.js"      ></script>
+<script src = "lib/AudioTexture.js"         ></script>
+<script src = "lib/PhysicsRenderer.js"      ></script>
+<script src = "lib/ParticleUtils.js"        ></script>
+<script src = "lib/dat.gui.min.js"          ></script>
+<script src = "lib/OBJLoader.js"            ></script>
+<script src = "lib/Loader.js"                 ></script>
+<script src = "lib/SubdivisionModifier.js"    ></script>
+<script src = "lib/LeapTrackballControls.js"  ></script>
+
+<script src="fonts/helvetiker_bold.typeface.js"></script>
+<script src="fonts/helvetiker_regular.typeface.js"></script>
+
+
+<script src = "GEM.js"                      ></script>
+<script src = "GUI.js"                      ></script>
+
+
+<script src = "Arrangements.js"             ></script>
+
+
+<script src = "Text.js"                     ></script>
+<script src = "CurlMesh.js"                 ></script>
+<script src = "RepelerMesh.js"              ></script>
+<script src = "N2.js"                       ></script>
+
+<script>
+
+  var container , camera, scene, renderer , stats;
+
+  var gem , gui;
+
+  var tv1 = new THREE.Vector3();
+  var tv2 = new THREE.Vector3();
+  var repelerMeshes = [];
+  var repelersHidden = true;
+
+  var cubeMapRendered = false;
+
+
+  var cubeMapSpheres = [];
+  var REPELERS = [];
+
+
+
+  // TODO: make into loader
+  var loaded = 0;
+  var neededToLoad = 1;
+
+
+  var controller = new Leap.Controller();
+
+  var loader = new Loader();
+  loader.liftCurtain();
+
+  var clock = new THREE.Clock();
+
+  var audioController = new AudioController();
+  audioController.mute.gain.value = 0;
+ // var stream = new Stream(  'audio/growth.mp3',audioController  );
+  /*
+  var userAudio = new UserAudio( audioController );
+  userAudio.onStreamCreated = function(){
+
+    console.log('asds');
+    onLoad();
+
+  }*/
+
+  
+  /*var audio = new Audio(),
+  // `stream_url` you'd get from 
+  // requesting http://api.soundcloud.com/tracks/6981096.json
+  url = 'http://api.soundcloud.com/tracks/169306457/stream' +
+        '?client_id=2400df97862fa2c06f486af524e4f974';
+
+  audio.src = url;
+
+  var source = audioController.ctx.createMediaElementSource(audio);
+  source.connect(audioController.gain);
+  source.mediaElement.play();*/
+
+
+  var shaders = new ShaderLoader('shaders');
+
+  shaders.load( 'ss-fire' , 'fire' , 'simulation' );
+  shaders.load( 'vs-cube' , 'cube' , 'vertex' );
+  shaders.load( 'fs-cube' , 'cube' , 'fragment' );
+  shaders.load( 'vs-sem' , 'sem' , 'vertex' );
+  shaders.load( 'fs-sem' , 'sem' , 'fragment' );
+  shaders.load( 'vs-finger' , 'finger' , 'vertex' );
+  shaders.load( 'fs-finger' , 'finger' , 'fragment' );
+
+  shaders.shaderSetLoaded = function(){
+   onLoad();
+  }
+
+
+  var matcap = THREE.ImageUtils.loadTexture('img/rough-aluminium.jpg');
+  var modifier = new THREE.SubdivisionModifier( 1 );
+  var loadedMeshes = {}
+  
+  var objLoader  = new THREE.OBJLoader();
+  
+ 
+  var G_UNIFORMS = {
+
+    dT      : { type:"f" , value:0                            },
+    time    : { type:"f" , value:0                            },
+    t_audio : { type:"t" , value: audioController.texture     },
+
+  }
+
+
+
+
+
+ function init(){
+
+
+    scene = new THREE.Scene();
+    
+    camera = new THREE.PerspectiveCamera( 
+      50 ,
+      window.innerWidth / window.innerHeight,
+      10,
+      10000
+    );
+
+    // placing our camera position so it can see everything
+    camera.position.z = 2000 ;
+    camera.lookAt( new THREE.Vector3() );
+
+    cubeCamera = new THREE.CubeCamera( 20, 100000, 1024 );
+    cubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+    scene.add( cubeCamera );
+
+    // Getting the container in the right location
+    container     = document.createElement( 'div' );
+    container.id  = 'container';
+    
+    document.body.appendChild( container );
+
+    // Getting the stats in the right position
+    stats = new Stats();
+    stats.domElement.id = 'stats';
+    document.body.appendChild( stats.domElement );
+
+
+    // Setting up our Renderer
+    renderer = new THREE.WebGLRenderer({ alpha: true });
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+    renderer.domElement.style.background="#000";
+    
+   /* fallback = new THREE.TrackballControls( camera , renderer.domElement);
+
+    fallback.minDistance = 1;
+    fallback.maxDistance = 3000;
+
+    controls = new THREE.LeapTrackballControls( camera , controller , fallback );
+
+    controls.zoom = 100;
+    controls.maxZoom = 3000;
+    controls.minZoom = 500;
+    controls.zoomDampening = .9;
+    controls.zoomMultiplier = 1;
+    controls.rotationSpeed = 3;
+    controls.rotationDampening = .95;*/
+
+
+    // Making sure our renderer is always the right size
+    window.addEventListener( 'resize', onWindowResize , false );
+    window.addEventListener( 'mousemove', onMouseMove , false );
+   
+  
+
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+  
+  
+
+
+
+    var path = "img/cubemap/skybox/";
+    var format = '.jpg';
+    var urls = [
+        path + 'px' + format, path + 'nx' + format,
+        path + 'py' + format, path + 'ny' + format,
+        path + 'pz' + format, path + 'nz' + format
+    ];
+
+    
+   /* var path = "img/cubemap/space/";
+    var format = '.png';
+    var urls = [
+        path + 'px' + format, path + 'nx' + format,
+        path + 'py' + format, path + 'ny' + format,
+        path + 'pz' + format, path + 'nz' + format
+    ];
+
+
+   var path = "img/cubemap/brud/";
+    var format = '.jpg';
+    var urls = [
+        path + 'posx' + format, path + 'negx' + format,
+        path + 'posy' + format, path + 'negy' + format,
+        path + 'posz' + format, path + 'negz' + format
+    ];*/
+
+    var g = new THREE.IcosahedronGeometry( 1 , 2 );
+    var m = new THREE.MeshBasicMaterial({color:0x00000}); /*new THREE.ShaderMaterial( { 
+      vertexShader: shaders.vertexShaders.finger,
+      fragmentShader: shaders.fragmentShaders.finger,
+
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      uniforms:{
+
+        t_audio:G_UNIFORMS.t_audio,
+        custom1:{ type:"f" , value:.95 },
+
+      }
+    
+    } );*/
+
+    for( var i =0; i<50; i++ ){
+
+      var mesh = new THREE.Mesh( g , m );
+
+      var t = Math.random() * 2 * Math.PI;
+      var p = Math.random() * 2 * Math.PI;
+
+      mesh.target   = new THREE.Vector3();//toCart( 12 , t , p );
+      mesh.velocity = new THREE.Vector3();
+      mesh.power    = new THREE.Vector3( 1 , 1 , 1);
+
+      //mesh.position.copy( mesh.target );
+      REPELERS.push( mesh );
+
+      scene.add( mesh );
+
+    }
+
+   // Arrangements.plane( 20 , 'z' , -20 );
+    Arrangements.randomSphere( 10000 );
+
+    for( var i = 0; i < 50; i++ ){
+
+      REPELERS[i].ogTarget = REPELERS[i].target.clone();
+
+    }
+
+
+
+
+  //  var t = new Text('MOTION', 3 );
+
+    t = new THREE.Mesh( new THREE.IcosahedronGeometry( 100 , 6 ) );
+    //t.position.y = -80;
+    t.updateMatrix();
+
+
+    //var g = new THREE.Mesh( new THREE.IcosahedronGeometry( 3 , 4 ) );
+    gem = new RepelerMesh( 'Parameters' , t , REPELERS , {
+      
+      vs: shaders.vertexShaders.sem,
+      fs: shaders.fragmentShaders.sem,
+  
+      soul:{
+
+        repulsionPower:     { type:"f" , value: -60. , constraints:[-300  , 0] },
+        repulsionRadius:     { type:"f" , value: 100. , constraints:[ 0  , 1000] },
+
+
+      },
+
+      body:{
+        //t_refl:{type:"t" , value:reflectionCube},
+        //t_refr:{type:"t" , value:reflectionCube },
+        custom1:{type:"f" , value:.9 , constraints:[ .8 , 1 ]},
+        t_sem:{type:"t" , value: matcap }
+      }
+
+    }); 
+
+    gem.soul.reset( gem.t_og.value );
+    gem.toggle();
+
+    //stream.play();
+    controller.connect();
+  }
+
+
+  function animate(){
+
+
+
+    audioController.update();
+
+    G_UNIFORMS.dT.value = clock.getDelta();
+    G_UNIFORMS.time.value += G_UNIFORMS.dT.value;
+
+    gem.update();
+
+    
+    stats.update();
+     //camera.updateMatrix();
+
+
+    var p = gem.params; 
+    camera.position.x = p.rotationRadius * Math.sin( G_UNIFORMS.time.value * p.rotationSpeed );
+    camera.position.z = p.rotationRadius * Math.cos( G_UNIFORMS.time.value * p.rotationSpeed );
+    tv1.set( 0 , 0 , 0 );
+    camera.lookAt( tv1 );
+    camera.updateMatrix();
+
+    //controls.update();
+    updateFingers( controller.frame() );
+
+    for( var i = 0; i < REPELERS.length; i++ ){
+
+      if( !REPELERS[i].active ){
+      //console.log( REPELERS[i].target );
+        tv1.copy( REPELERS[i].target );
+
+        tv1.applyQuaternion( camera.quaternion );
+        
+        tv1.sub( REPELERS[i].position );
+
+        tv1.multiplyScalar( .1 );
+
+        
+        //console.log( tv1.x );
+        REPELERS[i].position.add( tv1 );
+         
+        var ind = i / (2 * REPELERS.length); 
+        var fI = Math.floor( ind * audioController.analyzer.array.length );
+        var p = audioController.analyzer.array[ fI ];
+
+        //console.log( p );
+        REPELERS[i].power.x = p / 128;
+
+      }
+      
+    }
+
+    
+    renderer.render( scene , camera );
+
+    requestAnimationFrame( animate );
+
+  }
+
+
+  function onMouseMove(e ){
+
+ 
+  }
+
+  // Resets the renderer to be the proper size
+  function onWindowResize(){
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+   
+    var dpr = devicePixelRatio || 1;
+
+    //camUniforms.SS.value.x = window.innerWidth * dpr;
+    //camUniforms.SS.value.y = window.innerHeight * dpr;
+
+
+  }
+
+
+  function onLoad(){
+
+
+    loaded ++;
+
+    console.log(loaded );
+    if( loaded === neededToLoad ){
+
+      init();
+      animate();
+      
+   
+      /*if( stream ){
+      
+        stream.play();
+
+      }*/
+
+    }
+
+  }
+
+  function toCart( r , t , p ){
+
+    var x = r *(Math.sin(t))*(Math.cos(p));
+    var y = r *(Math.sin(t))*(Math.sin(p));
+    var z = r * (Math.cos(t));
+
+    return new THREE.Vector3(x,y,z);
+
+  }
+
+   function updateFingers( frame ){
+
+    if( frame.hands[0] ){
+
+      for( var i = 0; i < 25; i++ ){
+
+        var r = REPELERS[i];
+          r.active = true;
+
+
+        r.power.x = 1;
+
+        var bI =  i % 5 ;                     // Bone index
+        var fI = Math.floor( i / 5 );     // finger index
+
+        //console.log( fI , bI );
+        //console.log( frame );
+
+        var p = leapToScene( frame , frame.hands[0].fingers[fI].positions[bI] );
+
+        p[0] *= 100;
+        p[1] *= 100;
+        p[2] *= 100;
+        tv1.set( p[0] , p[1] , p[2] );
+
+
+          r.position.copy( camera.position );
+
+          tv1.applyQuaternion( camera.quaternion );
+
+          r.position.add( tv1 );
+
+          tv1.set( 0 , 0, -200 );
+          r.position.add( tv1.applyQuaternion( camera.quaternion ));
+
+
+      }
+
+      if( frame.hands[1] ){
+
+        for( var i = 0; i < 25; i++ ){
+
+
+          var r = REPELERS[i+25];
+
+          r.active = true;
+          r.power.x = 1;
+
+          var bI =  i % 5 ;                     // Bone index
+          var fI = Math.floor( i / 5 );     // finger index
+
+          //console.log( fI , bI );
+          //console.log( frame );
+
+          var p = leapToScene( frame , frame.hands[1].fingers[fI].positions[bI] );
+
+          p[0] *= 100;
+          p[1] *= 100;
+          p[2] *= 100;
+          tv1.set( p[0] , p[1] , p[2] );
+
+
+          r.position.copy( camera.position );
+
+          tv1.applyQuaternion( camera.quaternion );
+
+          r.position.add( tv1 );
+
+          tv1.set( 0 , 0, -200 );
+          r.position.add( tv1.applyQuaternion( camera.quaternion ));
+
+
+        }
+
+
+
+      }else{
+
+      
+        for( var i = 0; i < 25; i++ ){
+
+          r = REPELERS[ i + 25 ];
+          //r.power.x = 0;
+          r.active = false;
+
+        }
+
+      }
+
+
+      }else{
+
+       for( var i = 0; i < 25; i++ ){
+
+          r = REPELERS[ i ];
+          r.active = false;
+
+        }
+
+
+     /* for( var i = 0; i < REPELERS.length; i++ ){
+
+        var r = REPELERS[i];
+        var ogP = ogPositions[i];
+
+        r.position.copy( ogP );
+
+
+      }*/
+
+    }
+
+  }
+
+
+  function leapToScene( frame , position  ){
+
+
+   // console.log( position );
+    var p = frame.interactionBox.normalizePoint( position );
+
+    p[0] -= .5;
+    p[1] -= .5;
+    p[2] -= .5;
+
+    return p;
+
+  }
+
+
+
+</script>
+
+
+</body>
+</html>
