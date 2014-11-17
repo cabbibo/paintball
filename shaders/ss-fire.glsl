@@ -8,8 +8,6 @@ uniform float dT;
 uniform float timer;
 
 uniform vec3 repelers[ size ];
-uniform vec3 velocities[ size ];
-uniform vec3 radii[ size ];
 uniform vec3 power[ size ];
 
 uniform float repulsionPower;
